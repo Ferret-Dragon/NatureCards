@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -265,7 +265,6 @@ def profile():
 @login_required
 def export_data():
     import json
-    from flask import jsonify
 
     # Get all user's decks and cards
     decks = Deck.query.filter_by(user_id=current_user.id).all()
