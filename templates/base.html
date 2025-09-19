@@ -14,7 +14,10 @@
             {% if current_user.is_authenticated %}
                 <div class="user-info">
                     <span>Welcome, {{ current_user.username }}!</span>
-                    <a href="{{ url_for('logout') }}" class="btn btn-secondary">🚪 Logout</a>
+                    <div class="user-actions">
+                        <a href="{{ url_for('profile') }}" class="btn btn-primary">👤 Profile</a>
+                        <a href="{{ url_for('logout') }}" class="btn btn-secondary">🚪 Logout</a>
+                    </div>
                 </div>
             {% endif %}
         </div>

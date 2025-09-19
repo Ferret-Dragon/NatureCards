@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - NatureCards{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
+
+<div class="form-container">
+    <h2 class="deck-title">👤 Your Profile</h2>
+
+    <div class="profile-stats">
+        <div class="stat-card">
+            <h3>📊 Your Study Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_decks }}</span>
+                    <span class="stat-label">Decks Created</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_cards }}</span>
+                    <span class="stat-label">Total Cards</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ user.created_at.strftime('%m/%d/%Y') }}</span>
+                    <span class="stat-label">Member Since</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sync-info">
+            <h3>🌐 Multi-Device Access</h3>
+            <p class="sync-description">
+                Your notes are automatically synced across all devices! Simply login with your username and password on any device to access your study materials.
+            </p>
+
+            <div class="device-instructions">
+                <h4>📱 To Access From Another Device:</h4>
+                <ol>
+                    <li>Open NatureCards on any device</li>
+                    <li>Login with username: <strong>{{ user.username }}</strong></li>
+                    <li>Enter your password</li>
+                    <li>All your decks and cards will appear instantly!</li>
+                </ol>
+            </div>
+
+            <div class="backup-section">
+                <h4>💾 Backup Your Data</h4>
+                <p>Download a backup of all your cards for extra security:</p>
+                <a href="{{ url_for('export_data') }}" class="btn btn-success">📥 Download Backup</a>
+            </div>
+        </div>
+
+        <div class="sync-benefits">
+            <h3>✨ Benefits of Cloud Sync</h3>
+            <ul class="benefits-list">
+                <li>🔄 <strong>Automatic Sync:</strong> Changes appear instantly on all devices</li>
+                <li>💻 <strong>Universal Access:</strong> Study on phone, tablet, or computer</li>
+                <li>🔒 <strong>Secure & Private:</strong> Only you can access your notes</li>
+                <li>☁️ <strong>Cloud Storage:</strong> Never lose your progress</li>
+                <li>📱 <strong>Mobile Friendly:</strong> Works great on any screen size</li>
+            </ul>
+        </div>
+
+        <div class="app-url-info">
+            <h3>🔗 Your Study Link</h3>
+            <p>Bookmark this URL to quickly access your notes:</p>
+            <div class="url-display">
+                <code>{{ request.url_root }}</code>
+            </div>
+            <p class="url-note">💡 Save this link to your home screen for instant access!</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

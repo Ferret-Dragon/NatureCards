@@ -250,6 +250,61 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
+@app.route('/profile')
+@login_required
+def profile():
+    total_decks = Deck.query.filter_by(user_id=current_user.id).count()
+    total_cards = db.session.query(Card).join(Deck).filter(Deck.user_id == current_user.id).count()
+
+    return render_template('profile.html',
+                         user=current_user,
+                         total_decks=total_decks,
+                         total_cards=total_cards)
+
+@app.route('/export_data')
+@login_required
+def export_data():
+    import json
+    from flask import jsonify
+
+    # Get all user's decks and cards
+    decks = Deck.query.filter_by(user_id=current_user.id).all()
+
+    export_data = {
+        'user': current_user.username,
+        'export_date': datetime.utcnow().isoformat(),
+        'decks': []
+    }
+
+    for deck in decks:
+        deck_data = {
+            'name': deck.name,
+            'description': deck.description,
+            'created_at': deck.created_at.isoformat(),
+            'cards': []
+        }
+
+        for card in deck.cards:
+            card_data = {
+                'type': card.card_type,
+                'created_at': card.created_at.isoformat()
+            }
+
+            if card.card_type == 'flashcard':
+                card_data['front'] = card.front
+                card_data['back'] = card.back
+            else:
+                card_data['content'] = card.content
+
+            deck_data['cards'].append(card_data)
+
+        export_data['decks'].append(deck_data)
+
+    # Return JSON file download
+    response = jsonify(export_data)
+    response.headers['Content-Disposition'] = f'attachment; filename=naturecards_backup_{current_user.username}.json'
+    return response
+
 @app.route('/delete_deck/<int:deck_id>')
 @login_required
 def delete_deck(deck_id):

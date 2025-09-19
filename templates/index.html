@@ -23,6 +23,10 @@
     {% else %}
         <div class="no-decks">
             <p>🌿 No decks yet. Plant your first knowledge seed!</p>
+            <div class="sync-reminder" style="margin-top: 2rem; padding: 1rem; background: rgba(107, 142, 35, 0.1); border-radius: 8px; border-left: 4px solid var(--moss-green);">
+                <h3>🌐 Access Anywhere!</h3>
+                <p>Your cards automatically sync across all devices. Login with your username (<strong>{{ current_user.username }}</strong>) on any device to access your study materials!</p>
+            </div>
         </div>
     {% endif %}
 </div>
