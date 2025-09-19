@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ deck.name }} - NatureCards{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
+
+<div class="deck-card">
+    <h2 class="deck-title">📚 {{ deck.name }}</h2>
+    {% if deck.description %}
+        <p class="deck-description">{{ deck.description }}</p>
+    {% endif %}
+    <div class="deck-stats">
+        <span>🌱 {{ deck.cards|length }} cards</span>
+        <span>Created {{ deck.created_at.strftime('%m/%d/%Y') }}</span>
+    </div>
+    <div class="deck-actions">
+        <a href="{{ url_for('add_card', deck_id=deck.id) }}" class="btn btn-success">🍃 Add Card</a>
+        {% if deck.cards %}
+            <a href="{{ url_for('study_deck', deck_id=deck.id) }}" class="btn btn-secondary">📖 Study Deck</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if deck.cards %}
+    <div class="card-list">
+        {% for card in deck.cards %}
+        <div class="card-item">
+            {% if card.card_type == 'flashcard' %}
+                <div class="card-type-badge">🃏 Flashcard</div>
+                <div class="card-front">
+                    <strong>Front:</strong> {{ card.front }}
+                </div>
+                <div class="card-back">
+                    <strong>Back:</strong> {{ card.back }}
+                </div>
+            {% else %}
+                <div class="card-type-badge">📝 Note Card</div>
+                <div class="card-content">
+                    <strong>Content:</strong> {{ card.content }}
+                </div>
+                <div class="card-keyword">
+                    <strong>Auto-extracted keyword:</strong> <em>{{ card.extract_keyword() }}</em>
+                </div>
+            {% endif %}
+            <div style="margin-top: 1rem;">
+                <a href="{{ url_for('delete_card', card_id=card.id) }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this card?')">🗑️ Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="no-cards">
+        <p>🌿 This garden is empty. Add your first knowledge seed!</p>
+        <a href="{{ url_for('add_card', deck_id=deck.id) }}" class="btn btn-success">🍃 Add First Card</a>
+    </div>
+{% endif %}
+{% endblock %}

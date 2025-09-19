@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Add Card to {{ deck.name }} - NatureCards{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('view_deck', deck_id=deck.id) }}" class="back-link">← Back to {{ deck.name }}</a>
+
+<div class="form-container">
+    <h2 class="deck-title">🍃 Add New Knowledge Seed</h2>
+    <p style="text-align: center; color: var(--stone-gray); margin-bottom: 2rem;">to {{ deck.name }}</p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="card_type">Card Type:</label>
+            <div class="card-type-selector">
+                <label class="radio-option">
+                    <input type="radio" name="card_type" value="flashcard" checked onchange="toggleCardInputs()">
+                    <span>🃏 Flashcard (Front & Back)</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="card_type" value="note" onchange="toggleCardInputs()">
+                    <span>📝 Note Card (Single-sided)</span>
+                </label>
+            </div>
+        </div>
+
+        <div id="flashcard-inputs">
+            <div class="form-group">
+                <label for="front">Front (Question/Term):</label>
+                <textarea id="front" name="front" placeholder="What do you want to remember?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="back">Back (Answer/Definition):</label>
+                <textarea id="back" name="back" placeholder="The answer or explanation..."></textarea>
+            </div>
+        </div>
+
+        <div id="note-inputs" style="display: none;">
+            <div class="form-group">
+                <label for="content">Note Content:</label>
+                <textarea id="content" name="content" placeholder="Write your notes here. Keywords will be automatically extracted for study mode."></textarea>
+            </div>
+            <p class="note-hint">💡 Keywords will be automatically extracted from your notes for flashcard study mode!</p>
+        </div>
+
+        <button type="submit" class="btn btn-success">🌱 Plant Card</button>
+    </form>
+
+    <script>
+        function toggleCardInputs() {
+            const cardType = document.querySelector('input[name="card_type"]:checked').value;
+            const flashcardInputs = document.getElementById('flashcard-inputs');
+            const noteInputs = document.getElementById('note-inputs');
+            const frontInput = document.getElementById('front');
+            const backInput = document.getElementById('back');
+            const contentInput = document.getElementById('content');
+
+            if (cardType === 'flashcard') {
+                flashcardInputs.style.display = 'block';
+                noteInputs.style.display = 'none';
+                frontInput.required = true;
+                backInput.required = true;
+                contentInput.required = false;
+            } else {
+                flashcardInputs.style.display = 'none';
+                noteInputs.style.display = 'block';
+                frontInput.required = false;
+                backInput.required = false;
+                contentInput.required = true;
+            }
+        }
+    </script>
+</div>
+{% endblock %}

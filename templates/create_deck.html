@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Deck - NatureCards{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
+
+<div class="form-container">
+    <h2 class="deck-title">🌱 Plant a New Knowledge Garden</h2>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Deck Name:</label>
+            <input type="text" id="name" name="name" required placeholder="e.g., Biology 101, French Vocabulary">
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description (optional):</label>
+            <textarea id="description" name="description" placeholder="What will you learn in this deck?"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-success">🌿 Create Deck</button>
+    </form>
+</div>
+{% endblock %}

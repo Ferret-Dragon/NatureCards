@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="deck-grid">
+    {% if decks %}
+        {% for deck in decks %}
+        <div class="deck-card">
+            <h3 class="deck-title">{{ deck.name }}</h3>
+            {% if deck.description %}
+                <p class="deck-description">{{ deck.description }}</p>
+            {% endif %}
+            <div class="deck-stats">
+                <span>📚 {{ deck.cards|length }} cards</span>
+                <span>🌱 Created {{ deck.created_at.strftime('%m/%d/%Y') }}</span>
+            </div>
+            <div class="deck-actions">
+                <a href="{{ url_for('view_deck', deck_id=deck.id) }}" class="btn btn-primary">View Deck</a>
+                <a href="{{ url_for('study_deck', deck_id=deck.id) }}" class="btn btn-secondary">Study</a>
+                <a href="{{ url_for('delete_deck', deck_id=deck.id) }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this deck?')">Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-decks">
+            <p>🌿 No decks yet. Plant your first knowledge seed!</p>
+        </div>
+    {% endif %}
+</div>
+
+<a href="{{ url_for('create_deck') }}" class="btn btn-success create-deck-btn">🌱 Create New Deck</a>
+{% endblock %}

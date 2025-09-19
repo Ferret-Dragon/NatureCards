@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Study {{ deck.name }} - NatureCards{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('view_deck', deck_id=deck.id) }}" class="back-link">← Back to {{ deck.name }}</a>
+
+<div class="study-container">
+    <h2 class="deck-title">📖 Studying: {{ deck.name }}</h2>
+
+    {% if deck.cards %}
+        <div class="study-progress">
+            <span id="current-card">1</span> of {{ deck.cards|length }} cards
+        </div>
+
+        <div class="flashcard" id="flashcard" onclick="flipCard()">
+            <div id="card-content">Click to start studying!</div>
+            <div id="card-type-indicator"></div>
+        </div>
+
+        <div class="study-controls">
+            <button class="btn btn-secondary" onclick="previousCard()">⬅️ Previous</button>
+            <button class="btn btn-primary" onclick="flipCard()">🔄 Flip</button>
+            <button class="btn btn-secondary" onclick="nextCard()">➡️ Next</button>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <button class="btn btn-success" onclick="shuffleCards()">🔀 Shuffle</button>
+            <button class="btn btn-primary" onclick="resetStudy()">🔄 Reset</button>
+        </div>
+    {% else %}
+        <div class="no-cards">
+            <p>🌿 This deck is empty. Add some cards to start studying!</p>
+            <a href="{{ url_for('add_card', deck_id=deck.id) }}" class="btn btn-success">🍃 Add Cards</a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    const studyCards = {{ study_cards|tojson }};
+    let currentCardIndex = 0;
+    let showingFront = true;
+    let cardOrder = [...Array(studyCards.length).keys()];
+
+    function updateCard() {
+        const cardContent = document.getElementById('card-content');
+        const flashcard = document.getElementById('flashcard');
+        const currentCardElement = document.getElementById('current-card');
+        const typeIndicator = document.getElementById('card-type-indicator');
+
+        if (studyCards.length === 0) return;
+
+        const actualIndex = cardOrder[currentCardIndex];
+        const currentCard = studyCards[actualIndex];
+
+        if (showingFront) {
+            cardContent.textContent = currentCard.front;
+            flashcard.classList.remove('flipped');
+
+            // Show card type indicator
+            if (currentCard.type === 'note') {
+                typeIndicator.textContent = '📝 Auto-extracted keyword';
+                typeIndicator.style.display = 'block';
+            } else {
+                typeIndicator.style.display = 'none';
+            }
+        } else {
+            cardContent.textContent = currentCard.back;
+            flashcard.classList.add('flipped');
+
+            // Show full note for note cards
+            if (currentCard.type === 'note') {
+                typeIndicator.textContent = '📝 Full note content';
+                typeIndicator.style.display = 'block';
+            } else {
+                typeIndicator.style.display = 'none';
+            }
+        }
+
+        currentCardElement.textContent = currentCardIndex + 1;
+    }
+
+    function flipCard() {
+        if (studyCards.length === 0) return;
+        showingFront = !showingFront;
+        updateCard();
+    }
+
+    function nextCard() {
+        if (studyCards.length === 0) return;
+        currentCardIndex = (currentCardIndex + 1) % studyCards.length;
+        showingFront = true;
+        updateCard();
+    }
+
+    function previousCard() {
+        if (studyCards.length === 0) return;
+        currentCardIndex = currentCardIndex === 0 ? studyCards.length - 1 : currentCardIndex - 1;
+        showingFront = true;
+        updateCard();
+    }
+
+    function shuffleCards() {
+        if (studyCards.length === 0) return;
+        cardOrder = cardOrder.sort(() => Math.random() - 0.5);
+        currentCardIndex = 0;
+        showingFront = true;
+        updateCard();
+    }
+
+    function resetStudy() {
+        if (studyCards.length === 0) return;
+        cardOrder = [...Array(studyCards.length).keys()];
+        currentCardIndex = 0;
+        showingFront = true;
+        updateCard();
+    }
+
+    // Initialize the first card
+    if (studyCards.length > 0) {
+        updateCard();
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (studyCards.length === 0) return;
+
+        switch(e.key) {
+            case ' ':
+            case 'Enter':
+                e.preventDefault();
+                flipCard();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                previousCard();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                nextCard();
+                break;
+        }
+    });
+</script>
+{% endblock %}
