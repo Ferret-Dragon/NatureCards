@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - NatureCards</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🌿 NatureCards</h1>
+            <p class="subtitle">Login to your organic study garden</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="flash-message flash-error">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="form-container">
+                <h2 class="deck-title">🍃 Welcome Back</h2>
+                <p style="text-align: center; color: var(--stone-gray); margin-bottom: 2rem;">Sign in to access your study materials</p>
+
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" required placeholder="Enter your username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    </div>
+
+                    <button type="submit" class="btn btn-success">🌱 Login</button>
+                </form>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <p>Don't have an account? <a href="{{ url_for('register') }}" style="color: var(--moss-green); text-decoration: none; font-weight: 600;">🌿 Create one here</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

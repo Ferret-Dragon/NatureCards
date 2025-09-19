@@ -11,16 +11,22 @@
         <div class="container">
             <h1>🌿 NatureCards</h1>
             <p class="subtitle">Grow your knowledge naturally</p>
+            {% if current_user.is_authenticated %}
+                <div class="user-info">
+                    <span>Welcome, {{ current_user.username }}!</span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary">🚪 Logout</a>
+                </div>
+            {% endif %}
         </div>
     </header>
 
     <main>
         <div class="container">
-            {% with messages = get_flashed_messages() %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <div class="flash-messages">
-                        {% for message in messages %}
-                            <div class="flash-message flash-success">{{ message }}</div>
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">{{ message }}</div>
                         {% endfor %}
                     </div>
                 {% endif %}
