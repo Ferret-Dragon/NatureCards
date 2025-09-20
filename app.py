@@ -2,14 +2,27 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import re
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///flashcards.db')
+
+# Database configuration with PostgreSQL for production
+database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith('postgres://'):
+    # Render/Heroku fix for newer SQLAlchemy
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///flashcards.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Session configuration for longer login duration
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # 30 days
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)
+app.config['REMEMBER_COOKIE_SECURE'] = True
+app.config['REMEMBER_COOKIE_HTTPONLY'] = True
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -17,6 +30,8 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access your flashcards.'
 login_manager.login_message_category = 'info'
+login_manager.session_protection = 'strong'
+login_manager.remember_cookie_duration = timedelta(days=30)
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -234,7 +249,8 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and user.check_password(password):
-            login_user(user)
+            # Enable remember me for 30 days
+            login_user(user, remember=True, duration=timedelta(days=30))
             next_page = request.args.get('next')
             flash('Logged in successfully!', 'success')
             return redirect(next_page) if next_page else redirect(url_for('index'))

@@ -7,3 +7,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.16
+      - key: SECRET_KEY
+        generateValue: true
+
+databases:
+  - name: naturecards-db
+    databaseName: naturecards
+    user: naturecards
