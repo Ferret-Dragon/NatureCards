@@ -128,6 +128,62 @@ class Card(db.Model):
         keyword = max(word_scores, key=word_scores.get)
         return keyword.title()
 
+class FunFact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    clue = db.Column(db.String(200), nullable=False)
+    answer = db.Column(db.String(50), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+
+    def __repr__(self):
+        return f'<FunFact {self.answer}>'
+
+def seed_fun_facts():
+    """Seed the database with fun facts"""
+    fun_facts = [
+        ("Largest mammal on Earth", "WHALE", "Nature"),
+        ("Capital of France", "PARIS", "Geography"),
+        ("Author of Romeo and Juliet", "SHAKESPEARE", "Literature"),
+        ("Planet closest to the sun", "MERCURY", "Science"),
+        ("Tallest mountain in the world", "EVEREST", "Geography"),
+        ("Chemical symbol for gold", "AU", "Science"),
+        ("Fastest land animal", "CHEETAH", "Nature"),
+        ("Number of continents", "SEVEN", "Geography"),
+        ("Study of stars and planets", "ASTRONOMY", "Science"),
+        ("Largest ocean on Earth", "PACIFIC", "Geography"),
+        ("Red planet in our solar system", "MARS", "Science"),
+        ("King of the jungle", "LION", "Nature"),
+        ("Hardest natural substance", "DIAMOND", "Science"),
+        ("Ancient wonder in Egypt", "PYRAMID", "History"),
+        ("Language spoken in Brazil", "PORTUGUESE", "Geography"),
+        ("Smallest bird in the world", "HUMMINGBIRD", "Nature"),
+        ("Instrument with 88 keys", "PIANO", "Music"),
+        ("Largest desert in the world", "SAHARA", "Geography"),
+        ("Gas we breathe to live", "OXYGEN", "Science"),
+        ("Frozen water", "ICE", "Science"),
+        ("Animal that gives us milk", "COW", "Nature"),
+        ("Season after winter", "SPRING", "Nature"),
+        ("Device used to tell time", "CLOCK", "General"),
+        ("Primary colors are red, blue, and", "YELLOW", "Art"),
+        ("Number of sides in a triangle", "THREE", "Math"),
+        ("Opposite of hot", "COLD", "General"),
+        ("Animal known for its trunk", "ELEPHANT", "Nature"),
+        ("First meal of the day", "BREAKFAST", "General"),
+        ("Planet we live on", "EARTH", "Science"),
+        ("Sound a cat makes", "MEOW", "Nature"),
+        ("Opposite of black", "WHITE", "General"),
+        ("Vehicle that flies in the sky", "AIRPLANE", "Transportation"),
+        ("Insect that makes honey", "BEE", "Nature"),
+        ("Number of legs on a spider", "EIGHT", "Nature"),
+        ("Fruit that keeps the doctor away", "APPLE", "Health")
+    ]
+
+    for clue, answer, category in fun_facts:
+        if not FunFact.query.filter_by(answer=answer).first():
+            fact = FunFact(clue=clue, answer=answer, category=category)
+            db.session.add(fact)
+
+    db.session.commit()
+
 @app.route('/')
 @login_required
 def index():
@@ -203,6 +259,186 @@ def study_deck(deck_id):
             })
 
     return render_template('study.html', deck=deck, study_cards=study_cards)
+
+import random
+
+class CrosswordGenerator:
+    def __init__(self, size=15):
+        self.size = size
+        self.grid = [['' for _ in range(size)] for _ in range(size)]
+        self.word_positions = []
+
+    def clean_word(self, word):
+        """Clean word for crossword use"""
+        return ''.join(char.upper() for char in word if char.isalpha())
+
+    def can_place_word(self, word, row, col, direction):
+        """Check if word can be placed at position"""
+        word = self.clean_word(word)
+        if not word or len(word) < 2:
+            return False
+
+        if direction == 'across':
+            if col + len(word) > self.size:
+                return False
+            # Check for conflicts
+            for i, letter in enumerate(word):
+                current = self.grid[row][col + i]
+                if current != '' and current != letter:
+                    return False
+            return True
+        else:  # down
+            if row + len(word) > self.size:
+                return False
+            # Check for conflicts
+            for i, letter in enumerate(word):
+                current = self.grid[row + i][col]
+                if current != '' and current != letter:
+                    return False
+            return True
+
+    def place_word(self, word, clue, row, col, direction):
+        """Place word on grid"""
+        word = self.clean_word(word)
+        if not word:
+            return False
+
+        if direction == 'across':
+            for i, letter in enumerate(word):
+                self.grid[row][col + i] = letter
+        else:  # down
+            for i, letter in enumerate(word):
+                self.grid[row + i][col] = letter
+
+        self.word_positions.append({
+            'word': word,
+            'clue': clue,
+            'row': row,
+            'col': col,
+            'direction': direction,
+            'number': len(self.word_positions) + 1
+        })
+        return True
+
+    def find_intersections(self, word):
+        """Find possible intersections with existing words"""
+        word = self.clean_word(word)
+        if not word:
+            return []
+
+        intersections = []
+
+        for pos in self.word_positions:
+            existing_word = pos['word']
+            for i, letter in enumerate(word):
+                for j, existing_letter in enumerate(existing_word):
+                    if letter == existing_letter:
+                        if pos['direction'] == 'across':
+                            # Place new word down
+                            new_row = pos['row'] - i
+                            new_col = pos['col'] + j
+                            if (new_row >= 0 and new_row + len(word) <= self.size and
+                                self.can_place_word(word, new_row, new_col, 'down')):
+                                intersections.append((new_row, new_col, 'down'))
+                        else:
+                            # Place new word across
+                            new_row = pos['row'] + j
+                            new_col = pos['col'] - i
+                            if (new_col >= 0 and new_col + len(word) <= self.size and
+                                self.can_place_word(word, new_row, new_col, 'across')):
+                                intersections.append((new_row, new_col, 'across'))
+
+        return intersections
+
+    def generate_crossword(self, word_clue_pairs):
+        """Generate crossword from word-clue pairs"""
+        if not word_clue_pairs:
+            return None
+
+        # Shuffle for variety
+        random.shuffle(word_clue_pairs)
+
+        # Place first word in center
+        first_word, first_clue = word_clue_pairs[0]
+        first_word = self.clean_word(first_word)
+        if first_word:
+            start_row = self.size // 2
+            start_col = (self.size - len(first_word)) // 2
+            self.place_word(first_word, first_clue, start_row, start_col, 'across')
+
+        # Try to place remaining words
+        for word, clue in word_clue_pairs[1:]:
+            word = self.clean_word(word)
+            if not word:
+                continue
+
+            intersections = self.find_intersections(word)
+            if intersections:
+                # Try first valid intersection
+                row, col, direction = intersections[0]
+                self.place_word(word, clue, row, col, direction)
+            else:
+                # Try to place randomly if no intersections found
+                for _ in range(20):  # Max attempts
+                    row = random.randint(0, self.size - 1)
+                    col = random.randint(0, self.size - 1)
+                    direction = random.choice(['across', 'down'])
+                    if self.can_place_word(word, row, col, direction):
+                        self.place_word(word, clue, row, col, direction)
+                        break
+
+        return {
+            'grid': self.grid,
+            'clues': {
+                'across': [pos for pos in self.word_positions if pos['direction'] == 'across'],
+                'down': [pos for pos in self.word_positions if pos['direction'] == 'down']
+            }
+        }
+
+@app.route('/deck/<int:deck_id>/crossword')
+@login_required
+def generate_crossword(deck_id):
+    deck = Deck.query.filter_by(id=deck_id, user_id=current_user.id).first_or_404()
+
+    # Collect words and clues from deck
+    word_clue_pairs = []
+
+    # Add flashcards
+    for card in deck.cards:
+        if card.card_type == 'flashcard':
+            # Use front as clue, back as answer
+            answer = card.back.strip()
+            clue = card.front.strip()
+            if answer and clue:
+                word_clue_pairs.append((answer, clue))
+        else:  # note card
+            # Use extracted keyword as answer, truncated note as clue
+            keyword = card.extract_keyword()
+            clue = card.content[:100].strip()
+            if len(card.content) > 100:
+                clue += "..."
+            if keyword and clue:
+                word_clue_pairs.append((keyword, clue))
+
+    # Add fun facts if not enough words
+    target_words = 15
+    if len(word_clue_pairs) < target_words:
+        fun_facts = FunFact.query.order_by(db.func.random()).limit(target_words - len(word_clue_pairs)).all()
+        for fact in fun_facts:
+            word_clue_pairs.append((fact.answer, fact.clue))
+
+    # Generate crossword
+    generator = CrosswordGenerator()
+    crossword_data = generator.generate_crossword(word_clue_pairs)
+
+    if not crossword_data:
+        flash('Unable to generate crossword. Try adding more cards to your deck!', 'error')
+        return redirect(url_for('view_deck', deck_id=deck_id))
+
+    return render_template('crossword.html',
+                         deck=deck,
+                         crossword=crossword_data,
+                         size=generator.size)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -347,6 +583,9 @@ if __name__ == '__main__':
         if not os.environ.get('DATABASE_URL'):
             db.drop_all()
         db.create_all()
+
+        # Seed fun facts
+        seed_fun_facts()
 
     # Use environment variable for debug mode
     debug_mode = not os.environ.get('DATABASE_URL')

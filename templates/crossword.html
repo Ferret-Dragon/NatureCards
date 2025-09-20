@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Crossword Puzzle - {{ deck.name }} - NatureCards{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('view_deck', deck_id=deck.id) }}" class="back-link">← Back to {{ deck.name }}</a>
+
+<div class="crossword-container">
+    <h2 class="deck-title">🧩 Crossword Puzzle</h2>
+    <p class="crossword-subtitle">Generated from {{ deck.name }} + Fun Facts</p>
+
+    <div class="crossword-game">
+        <div class="crossword-grid-container">
+            <div class="crossword-grid" style="grid-template-columns: repeat({{ size }}, 1fr);">
+                {% for row in range(size) %}
+                    {% for col in range(size) %}
+                        {% set cell_letter = crossword.grid[row][col] %}
+                        {% set cell_number = '' %}
+
+                        <!-- Find if this cell has a number -->
+                        {% for clue in crossword.clues.across + crossword.clues.down %}
+                            {% if clue.row == row and clue.col == col %}
+                                {% set cell_number = clue.number %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <div class="crossword-cell {% if cell_letter %}filled{% else %}empty{% endif %}"
+                             data-row="{{ row }}" data-col="{{ col }}"
+                             {% if cell_letter %}data-answer="{{ cell_letter }}"{% endif %}>
+                            {% if cell_number %}
+                                <span class="cell-number">{{ cell_number }}</span>
+                            {% endif %}
+                            {% if cell_letter %}
+                                <input type="text" maxlength="1" class="cell-input" data-answer="{{ cell_letter }}">
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+
+            <div class="crossword-controls">
+                <button class="btn btn-primary" onclick="checkAnswers()">✅ Check Answers</button>
+                <button class="btn btn-secondary" onclick="showSolution()">💡 Show Solution</button>
+                <button class="btn btn-success" onclick="clearGrid()">🔄 Clear</button>
+            </div>
+        </div>
+
+        <div class="crossword-clues">
+            <div class="clues-section">
+                <h3>🔴 Across</h3>
+                <div class="clues-list">
+                    {% for clue in crossword.clues.across %}
+                        <div class="clue-item" data-number="{{ clue.number }}" data-direction="across">
+                            <span class="clue-number">{{ clue.number }}.</span>
+                            <span class="clue-text">{{ clue.clue }}</span>
+                            <span class="clue-length">({{ clue.word|length }} letters)</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="clues-section">
+                <h3>🔵 Down</h3>
+                <div class="clues-list">
+                    {% for clue in crossword.clues.down %}
+                        <div class="clue-item" data-number="{{ clue.number }}" data-direction="down">
+                            <span class="clue-number">{{ clue.number }}.</span>
+                            <span class="clue-text">{{ clue.clue }}</span>
+                            <span class="clue-length">({{ clue.word|length }} letters)</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="crossword-info">
+        <p>🌱 This crossword includes your flashcards mixed with educational fun facts!</p>
+        <p>📚 Great way to test your knowledge and learn new things.</p>
+    </div>
+</div>
+
+<script>
+    const crosswordData = {{ crossword|tojson }};
+    let currentCell = null;
+    let currentDirection = 'across';
+
+    // Initialize crossword functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCrossword();
+    });
+
+    function initializeCrossword() {
+        // Add click handlers to cells
+        document.querySelectorAll('.cell-input').forEach(input => {
+            input.addEventListener('focus', function() {
+                highlightWord(this);
+            });
+
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+                moveToNextCell(this);
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value === '') {
+                    moveToPreviousCell(this);
+                }
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    moveToNextCell(this);
+                }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    moveToPreviousCell(this);
+                }
+            });
+        });
+
+        // Add click handlers to clues
+        document.querySelectorAll('.clue-item').forEach(clue => {
+            clue.addEventListener('click', function() {
+                highlightClueWord(this);
+            });
+        });
+    }
+
+    function highlightWord(input) {
+        const cell = input.closest('.crossword-cell');
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+
+        // Find which word this cell belongs to
+        // Implementation simplified for demo
+        currentCell = cell;
+    }
+
+    function highlightClueWord(clueElement) {
+        const number = parseInt(clueElement.dataset.number);
+        const direction = clueElement.dataset.direction;
+
+        // Find the word in crossword data
+        const clueData = crosswordData.clues[direction].find(c => c.number === number);
+        if (clueData) {
+            const startRow = clueData.row;
+            const startCol = clueData.col;
+
+            // Focus on first cell of the word
+            const firstCell = document.querySelector(
+                `[data-row="${startRow}"][data-col="${startCol}"] .cell-input`
+            );
+            if (firstCell) {
+                firstCell.focus();
+            }
+        }
+    }
+
+    function moveToNextCell(input) {
+        // Simple implementation - move to next input
+        const inputs = Array.from(document.querySelectorAll('.cell-input'));
+        const currentIndex = inputs.indexOf(input);
+        if (currentIndex < inputs.length - 1) {
+            inputs[currentIndex + 1].focus();
+        }
+    }
+
+    function moveToPreviousCell(input) {
+        // Simple implementation - move to previous input
+        const inputs = Array.from(document.querySelectorAll('.cell-input'));
+        const currentIndex = inputs.indexOf(input);
+        if (currentIndex > 0) {
+            inputs[currentIndex - 1].focus();
+        }
+    }
+
+    function checkAnswers() {
+        let correct = 0;
+        let total = 0;
+
+        document.querySelectorAll('.cell-input').forEach(input => {
+            total++;
+            const answer = input.dataset.answer;
+            const userInput = input.value.toUpperCase();
+
+            if (userInput === answer) {
+                correct++;
+                input.style.backgroundColor = '#d4edda';
+                input.style.color = '#155724';
+            } else if (userInput !== '') {
+                input.style.backgroundColor = '#f8d7da';
+                input.style.color = '#721c24';
+            }
+        });
+
+        const percentage = Math.round((correct / total) * 100);
+        alert(`You got ${correct} out of ${total} letters correct! (${percentage}%)`);
+    }
+
+    function showSolution() {
+        if (confirm('Are you sure you want to see the solution?')) {
+            document.querySelectorAll('.cell-input').forEach(input => {
+                input.value = input.dataset.answer;
+                input.style.backgroundColor = '#e8f5e8';
+            });
+        }
+    }
+
+    function clearGrid() {
+        document.querySelectorAll('.cell-input').forEach(input => {
+            input.value = '';
+            input.style.backgroundColor = '';
+            input.style.color = '';
+        });
+    }
+</script>
+{% endblock %}

@@ -18,6 +18,7 @@
         <a href="{{ url_for('add_card', deck_id=deck.id) }}" class="btn btn-success">🍃 Add Card</a>
         {% if deck.cards %}
             <a href="{{ url_for('study_deck', deck_id=deck.id) }}" class="btn btn-secondary">📖 Study Deck</a>
+            <a href="{{ url_for('generate_crossword', deck_id=deck.id) }}" class="btn btn-primary">🧩 Generate Crossword</a>
         {% endif %}
     </div>
 </div>
