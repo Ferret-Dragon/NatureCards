@@ -423,22 +423,57 @@ def generate_crossword(deck_id):
     # Add fun facts if not enough words
     target_words = 15
     if len(word_clue_pairs) < target_words:
-        fun_facts = FunFact.query.order_by(db.func.random()).limit(target_words - len(word_clue_pairs)).all()
-        for fact in fun_facts:
-            word_clue_pairs.append((fact.answer, fact.clue))
+        try:
+            # Use a more compatible random ordering
+            import random as py_random
+            all_facts = FunFact.query.all()
+            py_random.shuffle(all_facts)
+            needed_facts = all_facts[:target_words - len(word_clue_pairs)]
+
+            for fact in needed_facts:
+                word_clue_pairs.append((fact.answer, fact.clue))
+        except Exception as e:
+            # Fallback: just use first few facts if random fails
+            fun_facts = FunFact.query.limit(target_words - len(word_clue_pairs)).all()
+            for fact in fun_facts:
+                word_clue_pairs.append((fact.answer, fact.clue))
 
     # Generate crossword
-    generator = CrosswordGenerator()
-    crossword_data = generator.generate_crossword(word_clue_pairs)
+    try:
+        generator = CrosswordGenerator()
+        crossword_data = generator.generate_crossword(word_clue_pairs)
 
-    if not crossword_data:
-        flash('Unable to generate crossword. Try adding more cards to your deck!', 'error')
+        if not crossword_data or not crossword_data.get('clues'):
+            flash('Unable to generate crossword. Try adding more cards to your deck!', 'error')
+            return redirect(url_for('view_deck', deck_id=deck_id))
+
+        return render_template('crossword.html',
+                             deck=deck,
+                             crossword=crossword_data,
+                             size=generator.size)
+    except Exception as e:
+        print(f"Crossword generation error: {e}")
+        flash(f'Error generating crossword: {str(e)}', 'error')
         return redirect(url_for('view_deck', deck_id=deck_id))
 
-    return render_template('crossword.html',
-                         deck=deck,
-                         crossword=crossword_data,
-                         size=generator.size)
+@app.route('/test_crossword')
+@login_required
+def test_crossword():
+    """Test route to debug crossword generation"""
+    try:
+        # Test with simple data
+        test_pairs = [
+            ("CAT", "Furry pet"),
+            ("DOG", "Man's best friend"),
+            ("SUN", "Star in our solar system")
+        ]
+
+        generator = CrosswordGenerator()
+        result = generator.generate_crossword(test_pairs)
+
+        return f"<h1>Crossword Test</h1><p>Result: {result}</p><p>Word positions: {len(generator.word_positions) if generator.word_positions else 0}</p>"
+    except Exception as e:
+        return f"<h1>Error</h1><p>{str(e)}</p>"
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
